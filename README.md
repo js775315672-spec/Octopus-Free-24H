@@ -10,3 +10,6 @@ Independent autonomous evolution engine
 - P2 functional CI passed; raw writer credential compromise and full history authentication remain unverified. P0 full execution isolation and P1 original artifact verification pending. P3–P5 blocked. GEN 000. No production schedule or merge.
 
 [Prior evidence and failures](DASHBOARD.md)
+
+## A1-12 safety gate
+Remote ledger writes removed from PR CI. Local bare-repository stress and historical read-only audit replace live remote mutation; distributed live recovery is historical evidence only. New CI pending. P0 execution sandbox and independent model-source recheck pending; P3–P5 blocked. No schedule or merge authorized.
