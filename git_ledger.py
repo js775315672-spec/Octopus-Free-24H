@@ -1,10 +1,11 @@
 """P2 Git CAS ledger prototype. Trusted publishers and synchronized clocks only.
 Use an explicitly provisioned dedicated ledger branch; never main or DEV.
 """
-import json, subprocess, tempfile, time, math, urllib.request, email.utils
+import json, subprocess, tempfile, time, math, urllib.request, email.utils, secrets
 from pathlib import Path
 
 class Conflict(RuntimeError): pass
+class ClockConflict(Conflict): pass
 
 class Ledger:
     ref="refs/heads/octopus-test-ledger"
@@ -14,13 +15,13 @@ class Ledger:
         if self.remote != "https://github.com/js775315672-spec/Octopus-Free-24H.git":
             return time.time()
         try:
-            req=urllib.request.Request("https://api.github.com/", headers={"Cache-Control":"no-cache","User-Agent":"octopus-ledger"})
+            req=urllib.request.Request("https://api.github.com/?octopus_nonce="+secrets.token_hex(16), headers={"Cache-Control":"no-cache, no-store","User-Agent":"octopus-ledger"})
             with urllib.request.urlopen(req,timeout=10) as response:
                 stamp=email.utils.parsedate_to_datetime(response.headers["Date"]).timestamp()
-            if abs(time.time()-stamp)>15: raise Conflict("clock skew")
+            if abs(time.time()-stamp)>15: raise ClockConflict("clock skew")
             return time.time()
         except Conflict: raise
-        except Exception as exc: raise Conflict("trusted clock unavailable") from exc
+        except Exception as exc: raise ClockConflict("trusted clock unavailable") from exc
     @staticmethod
     def validate(s):
         if not isinstance(s,dict) or set(s)-{"owner","expiry","fence","version","checkpoint","last_time"} or not {"owner","expiry","fence","version","checkpoint"}<=set(s): raise Conflict("state schema")
