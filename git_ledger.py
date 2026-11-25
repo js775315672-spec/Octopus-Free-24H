@@ -23,6 +23,8 @@ class Ledger:
             if head!=expected: raise Conflict("head changed")
             s=json.loads(self.git(d,"show",head+":state.json"))
             now=time.time()
+            if now<s.get("last_time",0): raise Conflict("clock regression")
+            s["last_time"]=now
             if action=="acquire":
                 if s["owner"] is not None and s["expiry"]>now: raise Conflict("busy")
                 s.update(owner=owner,fence=s["fence"]+1,expiry=now+ttl)
@@ -39,5 +41,11 @@ class Ledger:
             tree=self.git(d,"mktree",data="100644 blob "+blob+"\tstate.json\n")
             commit=self.git(d,"-c","user.name=Octopus","-c","user.email=octopus@example.invalid","commit-tree",tree,"-p",head,data="ledger transition\n")
             # No force: competing children cannot both fast-forward.
-            self.git(d,"push",self.remote,commit+":"+self.ref)
+            try:
+                self.git(d,"push",self.remote,commit+":"+self.ref)
+            except (Conflict, subprocess.TimeoutExpired):
+                # A lost response is not a failed commit if the exact commit is present.
+                self.git(d,"fetch","--no-tags",self.remote,self.ref)
+                observed=self.git(d,"rev-parse","FETCH_HEAD")
+                if observed!=commit: raise Conflict("push outcome uncertain or competing head")
             return commit,s
