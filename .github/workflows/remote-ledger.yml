@@ -53,3 +53,15 @@ jobs:
           TOKEN: ${{ github.token }}
           BASELINE: ${{ needs.baseline.outputs.head }}
         run: python3 remote_ledger_test.py recover
+  audit:
+    needs: recover
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: |
+          git fetch --no-tags https://github.com/js775315672-spec/Octopus-Free-24H.git refs/heads/octopus-test-ledger
+          python3 ledger_audit.py . "$(git rev-parse FETCH_HEAD)"
