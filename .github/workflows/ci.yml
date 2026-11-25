@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - run: python3 -m unittest -v test_policy test_inference test_state_store
+      - run: python3 -m unittest -v test_policy test_inference test_state_store test_git_ledger
 
   inference:
     runs-on: ubuntu-latest
