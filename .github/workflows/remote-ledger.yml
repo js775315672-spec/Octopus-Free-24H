@@ -1,0 +1,55 @@
+name: P2 remote ledger integration
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: octopus-test-ledger-integration
+  cancel-in-progress: false
+jobs:
+  baseline:
+    if: github.event.pull_request.number == 1 && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'dev/p0-isolation' && github.repository == 'js775315672-spec/Octopus-Free-24H'
+    runs-on: ubuntu-latest
+    outputs:
+      head: ${{ steps.head.outputs.sha }}
+    steps:
+      - id: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "sha=$(gh api repos/js775315672-spec/Octopus-Free-24H/git/ref/heads/octopus-test-ledger --jq .object.sha)" >> "$GITHUB_OUTPUT"
+  race:
+    needs: baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Compete for exact baseline
+        env:
+          TOKEN: ${{ github.token }}
+          BASELINE: ${{ needs.baseline.outputs.head }}
+          WORKER: ${{ matrix.worker }}
+        run: python3 remote_ledger_test.py race
+  recover:
+    needs: [baseline, race]
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify unique winner and recover abandoned lease
+        env:
+          TOKEN: ${{ github.token }}
+          BASELINE: ${{ needs.baseline.outputs.head }}
+        run: python3 remote_ledger_test.py recover
