@@ -9,13 +9,16 @@ class ClockConflict(Conflict): pass
 
 class Ledger:
     ref="refs/heads/octopus-test-ledger"
-    def __init__(self, remote):
+    def __init__(self, remote, clock_token=None):
         self.remote=str(remote)
+        self.clock_token=clock_token
     def trusted_time(self):
         if self.remote != "https://github.com/js775315672-spec/Octopus-Free-24H.git":
             return time.time()
         try:
-            req=urllib.request.Request("https://api.github.com/?octopus_nonce="+secrets.token_hex(16), headers={"Cache-Control":"no-cache, no-store","User-Agent":"octopus-ledger"})
+            headers={"Cache-Control":"no-cache, no-store","User-Agent":"octopus-ledger"}
+            if self.clock_token: headers["Authorization"]="Bearer "+self.clock_token
+            req=urllib.request.Request("https://api.github.com/?octopus_nonce="+secrets.token_hex(16), headers=headers)
             with urllib.request.urlopen(req,timeout=10) as response:
                 stamp=email.utils.parsedate_to_datetime(response.headers["Date"]).timestamp()
             if abs(time.time()-stamp)>15: raise ClockConflict("clock skew")

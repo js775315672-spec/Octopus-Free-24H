@@ -6,7 +6,7 @@ def main():
     if os.environ.get("GITHUB_REPOSITORY")!="js775315672-spec/Octopus-Free-24H": raise RuntimeError("wrong repo")
     token=os.environ.pop("TOKEN")
     os.environ.update(GIT_CONFIG_COUNT="1",GIT_CONFIG_KEY_0="http.https://github.com/.extraheader",GIT_CONFIG_VALUE_0="AUTHORIZATION: basic "+base64.b64encode(("x-access-token:"+token).encode()).decode(),GIT_TERMINAL_PROMPT="0")
-    l=Ledger(REMOTE)
+    l=Ledger(REMOTE,clock_token=token)
     baseline=os.environ["BASELINE"]
     prefix=os.environ["GITHUB_RUN_ID"]+":"+os.environ["GITHUB_RUN_ATTEMPT"]+":"
     def snapshot():

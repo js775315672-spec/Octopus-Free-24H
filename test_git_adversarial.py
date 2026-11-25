@@ -30,3 +30,11 @@ class AdversarialTests(unittest.TestCase):
         with patch.object(f.l,"git",side_effect=lose):
             h,s=f.l.transact(f.head,"acquire","owner")
         self.assertEqual(f.l.git(f.remote,"rev-parse",f.l.ref),h)
+
+    def test_authenticated_clock(self):
+        l=Ledger("https://github.com/js775315672-spec/Octopus-Free-24H.git",clock_token="dummy-test-token")
+        response=MagicMock()
+        response.__enter__.return_value.headers={"Date":"Thu, 01 Jan 1970 00:01:40 GMT"}
+        with patch("git_ledger.urllib.request.urlopen",return_value=response) as request, patch("git_ledger.time.time",return_value=100):
+            self.assertEqual(l.trusted_time(),100)
+            self.assertEqual(request.call_args.args[0].get_header("Authorization"),"Bearer dummy-test-token")
