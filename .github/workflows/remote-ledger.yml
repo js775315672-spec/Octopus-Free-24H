@@ -1,0 +1,25 @@
+name: P2 isolated ledger integration
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  local-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Local bare repository contention and recovery
+        run: python3 -m unittest -v test_git_ledger test_git_stress test_git_adversarial
+  historical-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: |
+          git fetch --no-tags https://github.com/js775315672-spec/Octopus-Free-24H.git refs/heads/octopus-test-ledger
+          python3 ledger_audit.py . "$(git rev-parse FETCH_HEAD)"
