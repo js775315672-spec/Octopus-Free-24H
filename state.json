@@ -1,1 +1,1 @@
-{"checkpoint": {"run": "45550101481:1:"}, "expiry": 1795582760.4966261, "fence": 2, "last_time": 1795582702.0985115, "owner": "45550101481:1:recovery", "version": 4}
+{"checkpoint": {"run": "45550101481:1:"}, "expiry": 0, "fence": 2, "last_time": 1795582703.680525, "owner": null, "version": 5}
